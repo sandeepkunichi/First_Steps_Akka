@@ -9,13 +9,14 @@ case object StartMessage
 case object StopMessage
 case object next
 
+case class Link(l: String)
+case class Content(con: String)
+
 class Actor1(actor2: ActorRef) extends Actor {				//Link generator
   var num=2000000
   def receive = {
     
     case StartMessage =>
-      val link = "http://www.imdb.com/title/tt"+num
-      actor2 ! link
       self ! next
       
     case next =>
@@ -23,7 +24,7 @@ class Actor1(actor2: ActorRef) extends Actor {				//Link generator
       if(num<=2000010)
       {
       val link = "http://www.imdb.com/title/tt"+num
-      actor2 ! link
+      actor2 ! Link(link)
       self ! next
       }
       else
@@ -50,14 +51,14 @@ class Actor2(actor3: ActorRef) extends Actor {			//Content fetcher
   
   def receive = {
     
-    case link =>
+    case Link(l) =>
       try{
-      val content = getContent(link.toString)
-      actor3 ! content
+      val content = getContent(l.toString)
+      actor3 ! Content(content)
       }
       catch {
          case ex: FileNotFoundException =>{
-            println("Missing file exception")
+            println("Missing file exception - Page not found")
          }
       }
       
@@ -83,9 +84,9 @@ class Actor3 extends Actor { 										//Content writer
 
 	def receive = {
 	  
-	  case content =>
+	  case Content(con) =>
 	    //outWriteContent(content.toString)
-	    appendToFile("MovieDB(small).txt",num+" "+content.toString)
+	    appendToFile("MovieDB.txt",num+" "+con.toString)
 	    println("Done printing onto the file, job number: "+num)
 	    num+=1
 	    
